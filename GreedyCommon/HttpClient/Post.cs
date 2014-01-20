@@ -9,7 +9,70 @@ namespace HttpClient
     public abstract class Post
     {
         const string BOUNDARY = "----WebKitFormBoundarymwt82GuALqhz9B6K";
-        const string NEW_LINE = "\r\n";
+     
+
+        protected static void Settings(HttpWebRequest request)
+        {
+            request.Method = WebRequestMethods.Http.Post;
+            request.ContentType = string.Format("multipart/form-data; boundary={0}", BOUNDARY);
+            request.KeepAlive = true;
+
+        }
+
+        protected static void WriteData(HttpWebRequest request, System.Collections.Specialized.NameValueCollection values, IEnumerable<UploadFile> files)
+        {
+            var boundary = "--" + BOUNDARY;
+            using (var postDataStream = new MemoryStream())
+            {
+
+                foreach (string name in values.Keys)
+                {
+                    var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
+                    postDataStream.Write(buffer, 0, buffer.Length);
+                    buffer = Encoding.ASCII.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"{1}{1}", name, Environment.NewLine));
+                    postDataStream.Write(buffer, 0, buffer.Length);
+                    buffer = Encoding.UTF8.GetBytes(values[name] + Environment.NewLine);
+                    postDataStream.Write(buffer, 0, buffer.Length);
+                }
+                if (files != null && files.Count() > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                        buffer = Encoding.UTF8.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"{2}", file.Name, file.Filename, Environment.NewLine));
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                        buffer = Encoding.ASCII.GetBytes(string.Format("Content-Type: {0}{1}{1}", file.ContentType, Environment.NewLine));
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                        file.Stream.CopyTo(postDataStream);
+                        buffer = Encoding.ASCII.GetBytes(Environment.NewLine);
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                    }
+                }
+                var boundaryBuffer = Encoding.ASCII.GetBytes(boundary + "--");
+                postDataStream.Write(boundaryBuffer, 0, boundaryBuffer.Length);
+                request.ContentLength = postDataStream.Length;
+                using (Stream s = request.GetRequestStream())
+                {
+                    postDataStream.WriteTo(s);
+                }
+                postDataStream.Close();
+            }
+
+        }
+
+        protected static string ReadData(HttpWebRequest request)
+        {
+            var res = string.Empty;
+            using (var response = request.GetResponse())
+            using (var sr = new StreamReader(response.GetResponseStream()))
+            {
+                res = sr.ReadToEnd();
+                sr.Close();
+            }
+            return res;
+        }
+
         /// <summary>
         /// Http.POST 模拟器,不能上传文件
         /// </summary>
@@ -21,40 +84,11 @@ namespace HttpClient
             ExecuteResult<String> er = null;
             try
             {
-                // Create a http request to the server endpoint that will pick up the
-                // file and file description.
                 HttpWebRequest requestToServerEndpoint = (HttpWebRequest)WebRequest.Create(url);
-                requestToServerEndpoint.Method = WebRequestMethods.Http.Post;
-                requestToServerEndpoint.ContentType = "multipart/form-data; boundary=" + BOUNDARY;
-                requestToServerEndpoint.KeepAlive = true;
-                requestToServerEndpoint.Credentials = System.Net.CredentialCache.DefaultCredentials;
-                using (var postDataStream = new MemoryStream())
-                using (var sw = new StreamWriter(postDataStream))
-                {
+                Settings(requestToServerEndpoint);
+                WriteData(requestToServerEndpoint, nv, null);
 
-                    foreach (string name in nv.Keys)
-                    {
-                        sw.Write(string.Format("--{0}{1}", BOUNDARY, NEW_LINE));
-                        sw.Write(string.Format("Content-Disposition: form-data; name=\"{0}\"{1}", name, NEW_LINE));
-                        sw.Write(NEW_LINE);
-                        sw.Write(string.Format("{0}{1}", nv[name], NEW_LINE));
-                    }
-                    sw.Write(string.Format("--{0}--", BOUNDARY));
-                    sw.Flush();
-                    requestToServerEndpoint.ContentLength = postDataStream.Length;
-                    using (Stream s = requestToServerEndpoint.GetRequestStream())
-                    {
-                        postDataStream.WriteTo(s);
-                    }
-                    postDataStream.Close();
-                }
-                var res = string.Empty;
-                var respons = (HttpWebResponse)requestToServerEndpoint.GetResponse();
-                using (var sr = new StreamReader(respons.GetResponseStream()))
-                {
-                    res = sr.ReadToEnd();
-                    sr.Close();
-                }
+                var res = ReadData(requestToServerEndpoint);
 
                 return new ExecuteResult<string>(res);
 
@@ -65,6 +99,7 @@ namespace HttpClient
             }
             return er;
         }
+
         /// <summary>
         /// Http.POST 模拟器,上传文件
         /// </summary>
@@ -74,56 +109,18 @@ namespace HttpClient
         /// <returns></returns>
         public static ExecuteResult<string> Execute(string address, System.Collections.Specialized.NameValueCollection values, IEnumerable<UploadFile> files)
         {
-            var request = WebRequest.Create(address);
-            request.Method = "POST";
-
-            request.ContentType = "multipart/form-data; boundary=" + BOUNDARY;
-            var boundary = "--" + BOUNDARY;
-            using (var postDataStream = new MemoryStream())
+            try
             {
-                // Write the values
-                foreach (string name in values.Keys)
-                {
-                    var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.ASCII.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"{1}{1}", name, Environment.NewLine));
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.UTF8.GetBytes(values[name] + Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                }
-                // Write the files
-                foreach (var file in files)
-                {
-                    var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.UTF8.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"{2}", file.Name, file.Filename, Environment.NewLine));
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.ASCII.GetBytes(string.Format("Content-Type: {0}{1}{1}", file.ContentType, Environment.NewLine));
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    file.Stream.CopyTo(postDataStream);
-                    buffer = Encoding.ASCII.GetBytes(Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                }
-                var boundaryBuffer = Encoding.ASCII.GetBytes(boundary + "--");
-                postDataStream.Write(boundaryBuffer, 0, boundaryBuffer.Length);
-                request.ContentLength = postDataStream.Length;
-                using (Stream s = request.GetRequestStream())
-                {
-                    postDataStream.WriteTo(s);
-                }
-                postDataStream.Close();
-
+                var request = (HttpWebRequest)WebRequest.Create(address);
+                Settings(request);
+                WriteData(request, values, files);
+                var res = ReadData(request);
+                return new ExecuteResult<string>(res);
             }
-            var res = string.Empty;
-
-            using (var response = request.GetResponse())
-            using (var sr = new StreamReader(response.GetResponseStream()))
+            catch (System.Exception ex)
             {
-                res = sr.ReadToEnd();
-                sr.Close();
+                return new ExecuteResult<string>(ex);
             }
-            return new ExecuteResult<string>(res);
-
 
         }
     }
