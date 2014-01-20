@@ -1,0 +1,17 @@
+﻿@{
+    ViewBag.Title = "主页";
+}
+
+<h2>@ViewBag.Message</h2>
+<p>
+    若要了解有关 ASP.NET MVC 的更多信息，请访问 <a href="http://asp.net/mvc" title="ASP.NET MVC 网站">http://asp.net/mvc</a>。
+</p>
+
+<form  method="post" action="/Home/Upload" enctype="multipart/form-data">
+  <input type="text" name="username" value="dhz1234234" />
+  <input type="text" name="userpwd" value="123435" />
+  <input type="file" name="imgfile" />
+  <input type="file" name="icofile" />
+  <input type="submit"　　value="OK" />
+
+</form>
