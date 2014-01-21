@@ -6,16 +6,21 @@ using System.Net;
 using System.IO;
 namespace HttpClient
 {
-    public abstract class Post
+    public class Post : HttpBase
     {
-        const string BOUNDARY = "----WebKitFormBoundarymwt82GuALqhz9B6K";
-     
+
+        protected Post()
+            : base()
+        {
+        }
+
 
         protected static void Settings(HttpWebRequest request)
         {
             request.Method = WebRequestMethods.Http.Post;
             request.ContentType = string.Format("multipart/form-data; boundary={0}", BOUNDARY);
             request.KeepAlive = true;
+            request.ProtocolVersion = HttpVersion.Version10;
 
         }
 

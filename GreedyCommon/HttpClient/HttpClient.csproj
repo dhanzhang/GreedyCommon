@@ -41,7 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExecuteResult.cs" />
-    <Compile Include="FileInfo.cs" />
+    <Compile Include="Get.cs" />
+    <Compile Include="HttpBase.cs" />
+    <Compile Include="UploadFile.cs" />
     <Compile Include="Post.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
