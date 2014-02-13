@@ -14,16 +14,12 @@ namespace HttpClient
         }
 
         #region Async Request
-        /// <summary>
-        /// Make the Async Request.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public static Task<string> MakeAsyncRequest(string url)
+  
+        public static Task<string> MakeAsyncHttpGetRequest(string url)
         {
             var request = (HttpWebRequest)WebRequest.Create(url);
             //request.ContentType = ContentTypeXml;
-            request.Method = "PUT";
+            request.Method = "GET";
 
             Task<WebResponse> task = Task.Factory.FromAsync(
                 request.BeginGetResponse,
