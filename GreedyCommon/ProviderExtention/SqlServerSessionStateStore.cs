@@ -14,6 +14,25 @@ namespace ProviderExtention
 {
     public class SqlServerSessionStateStore : SessionStateStoreProviderBase
     {
+        #region MsSQL
+
+  //      CREATE TABLE Sessions
+  //(
+  //  SessionId       varchar(80)  NOT NULL,
+  //  ApplicationName varchar(255) NOT NULL,
+  //  Created         DateTime  NOT NULL,
+  //  Expires         DateTime  NOT NULL,
+  //  LockDate        DateTime  NOT NULL,
+  //  LockId          Integer   NOT NULL,
+  //  Timeout         Integer   NOT NULL,
+  //  Locked          BIT     NOT NULL,
+  //  SessionItems    varchar(max),
+  //  Flags           Integer   NOT NULL,
+  //    CONSTRAINT PKSessions PRIMARY KEY (SessionId, ApplicationName)
+  //)
+
+
+        #endregion
         private SessionStateSection pConfig = null;
         private string connectionString;
         private ConnectionStringSettings pConnectionStringSettings;
