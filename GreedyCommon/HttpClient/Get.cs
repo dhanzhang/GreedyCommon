@@ -31,13 +31,17 @@ namespace HttpClient
             ExecuteResult<string> res = null;
             try
             {
-
-                List<string> lst = new List<string>(args.Count); 
-                foreach (string key in args.Keys)
-                { 
-                    lst.Add(string.Format("{0}={1}", key, System.Net.WebUtility.HtmlEncode(args[key]))); 
+                var urlAddress = addresss;
+                if (args != null && args.Count > 0)
+                {
+                    List<string> lst = new List<string>(args.Count);
+                    foreach (string key in args.Keys)
+                    {
+                        lst.Add(string.Format("{0}={1}", key, System.Net.WebUtility.HtmlEncode(args[key])));
+                    }
+                    urlAddress = string.Format("{0}?{1}", addresss, string.Join("&", lst));
                 }
-                var urlAddress = string.Format("{0}?{1}", addresss, string.Join("&", lst)); 
+
                 HttpWebRequest request = WebRequest.Create(urlAddress) as HttpWebRequest;
                 if (addresss.StartsWith("https", StringComparison.OrdinalIgnoreCase))
                 {
@@ -65,13 +69,25 @@ namespace HttpClient
                 var text = "";
                 var response = request.GetResponse() as HttpWebResponse;
                 using (var rs = response.GetResponseStream())
-                using (var sr = new StreamReader(rs))
                 {
-                    text = sr.ReadToEnd();
-                    sr.Close();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        using (var sr = new StreamReader(rs))
+                        {
+                            text = sr.ReadToEnd();
+                            sr.Close();
+                        }
+                        res = new ExecuteResult<string>(text);
+                    }
+                    else
+                    {
+                        res = new ExecuteResult<string>()
+                        {
+                            IsOk = false,
+                            Message = response.StatusDescription
+                        };
+                    }
                 }
-                res = new ExecuteResult<string>(text);
-
             }
             catch (System.Exception ex)
             {

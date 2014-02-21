@@ -73,10 +73,10 @@ namespace TestProject1
         {
             string url = @"http://www.gyh.cn/Home/PSave";
             //string username, string userpwd
-            NameValueCollection nv = new NameValueCollection(2);
-            nv.Add("username", "dhz1234234");
-            nv.Add("userpwd", "123435");
-            var actual = HttpClient.Post.Execute(url, nv);
+            //NameValueCollection nv = new NameValueCollection(2);
+            //nv.Add("username", "dhz1234234");
+            //nv.Add("userpwd", "123435");
+            var actual = HttpClient.Post.Execute(url, null);
             Assert.IsTrue(actual.IsOk);
         }
         [TestMethod()]
@@ -87,7 +87,7 @@ namespace TestProject1
             NameValueCollection nv = new NameValueCollection(2);
             nv.Add("username", "dhz1234234");
             nv.Add("userpwd", "123435");
-            var aa= Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "aa.jpg");
+            var aa = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "aa.jpg");
             var bb = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bb.jpg");
             using (var stream2 = File.Open(aa, FileMode.Open))
             using (var stream3 = File.Open(bb, FileMode.Open))

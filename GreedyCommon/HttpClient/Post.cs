@@ -29,15 +29,17 @@ namespace HttpClient
             var boundary = "--" + BOUNDARY;
             using (var postDataStream = new MemoryStream())
             {
-
-                foreach (string name in values.Keys)
+                if (values != null)
                 {
-                    var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.ASCII.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"{1}{1}", name, Environment.NewLine));
-                    postDataStream.Write(buffer, 0, buffer.Length);
-                    buffer = Encoding.UTF8.GetBytes(values[name] + Environment.NewLine);
-                    postDataStream.Write(buffer, 0, buffer.Length);
+                    foreach (string name in values.Keys)
+                    {
+                        var buffer = Encoding.ASCII.GetBytes(boundary + Environment.NewLine);
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                        buffer = Encoding.ASCII.GetBytes(string.Format("Content-Disposition: form-data; name=\"{0}\"{1}{1}", name, Environment.NewLine));
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                        buffer = Encoding.UTF8.GetBytes(values[name] + Environment.NewLine);
+                        postDataStream.Write(buffer, 0, buffer.Length);
+                    }
                 }
                 if (files != null && files.Count() > 0)
                 {
@@ -66,15 +68,31 @@ namespace HttpClient
 
         }
 
-        protected static string ReadData(HttpWebRequest request)
+        protected static ExecuteResult<string> ReadData(HttpWebRequest request)
         {
-            var res = string.Empty;
-            using (var response = request.GetResponse())
-            using (var sr = new StreamReader(response.GetResponseStream()))
-            {
-                res = sr.ReadToEnd();
-                sr.Close();
-            }
+            ExecuteResult<string> res = null;
+            using (var response = (HttpWebResponse)request.GetResponse())
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    using (var sr = new StreamReader(response.GetResponseStream()))
+                    {
+
+                        res = new ExecuteResult<string>(sr.ReadToEnd());
+                        sr.Close();
+
+                    }
+                }
+                else
+                {
+
+                    res = new ExecuteResult<string>()
+                    {
+                        IsOk = false,
+                        Message = response.StatusDescription
+                    };
+                }
+
             return res;
         }
 
@@ -93,9 +111,9 @@ namespace HttpClient
                 Settings(requestToServerEndpoint);
                 WriteData(requestToServerEndpoint, nv, null);
 
-                var res = ReadData(requestToServerEndpoint);
+                return ReadData(requestToServerEndpoint);
 
-                return new ExecuteResult<string>(res);
+
 
             }
             catch (System.Exception ex)
@@ -119,8 +137,8 @@ namespace HttpClient
                 var request = (HttpWebRequest)WebRequest.Create(address);
                 Settings(request);
                 WriteData(request, values, files);
-                var res = ReadData(request);
-                return new ExecuteResult<string>(res);
+                return ReadData(request);
+
             }
             catch (System.Exception ex)
             {

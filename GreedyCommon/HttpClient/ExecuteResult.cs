@@ -13,6 +13,10 @@ namespace HttpClient
         public string Message { get; set; }
         public ExecuteResult()
         {
+            IsOk = false;
+            Exception = null;
+            Data = default(T);
+            Message = string.Empty;
         }
         public ExecuteResult(T data)
         {
